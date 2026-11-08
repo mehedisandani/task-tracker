@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Tracker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #f8fafc; color: #1e293b; padding: 2rem 1rem; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        form { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        input, select, button { padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; }
+        button { background: #2563eb; color: white; border: none; cursor: pointer; }
+        .task { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0; }
+        .completed { text-decoration: line-through; color: #94a3b8; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2 style="margin-bottom: 1rem;">Task & Habit Tracker</h2>
+        <div class="card">
+            <form action="/add" method="POST">
+                <input type="text" name="title" placeholder="New Task..." required style="flex-grow: 1;">
+                <select name="category">
+                    <option value="Study">Study</option>
+                    <option value="Work">Work</option>
+                    <option value="Personal">Personal</option>
+                </select>
+                <button type="submit">Add</button>
+            </form>
+            <div>
+                {% for task in tasks %}
+                    <div class="task">
+                        <div>
+                            <form action="/toggle/{{ task.id }}" method="POST" style="display:inline;">
+                                <button type="submit" style="background:#e2e8f0; color:black; padding: 2px 6px;">
+                                    {% if task.status == 'Completed' %}✓{% else %}○{% endif %}
+                                </button>
+                            </form>
+                            <span class="{% if task.status == 'Completed' %}completed{% endif %}">{{ task.title }} ({{ task.category }})</span>
+                        </div>
+                        <form action="/delete/{{ task.id }}" method="POST" style="display:inline;">
+                            <button type="submit" style="background:#ef4444; padding: 2px 6px;">Delete</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card">
+            <canvas id="statusChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+    <script>
+        fetch('/api/analytics')
+            .then(res => res.json())
+            .then(data => {
+                new Chart(document.getElementById('statusChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Completed', 'Pending'],
+                        datasets: [{
+                            data: [data.status_distribution.completed, data.status_distribution.pending],
+                            backgroundColor: ['#22c55e', '#f59e0b']
+                        }]
+                    }
+                });
+            });
+    </script>
+</body>
+</html>
